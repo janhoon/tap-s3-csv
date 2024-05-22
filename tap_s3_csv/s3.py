@@ -156,6 +156,8 @@ def sample_file(config: Dict, table_spec: Dict, s3_path: str, sample_rate: int) 
     :return: generator containing the samples as dictionaries
     """
     file_handle = get_file_handle(config, s3_path)
+    if s3_path.endswith('.gz'):
+        file_handle = un_gzip_file(file_handle)
     # _raw_stream seems like the wrong way to access this..
     iterator = get_row_iterator(file_handle._raw_stream, table_spec)  # pylint:disable=protected-access
 
@@ -201,6 +203,14 @@ def sample_files(config: Dict, table_spec: Dict, s3_files: Generator,
                     sample_rate)
         yield from itertools.islice(sample_file(config, table_spec, s3_file['key'], sample_rate), max_records)
 
+def un_gzip_file(file_handle: Iterator) -> Iterator:
+    """
+    Unzip the file
+    :param file_handle: file iterator
+    :returns: unzipped file iterator
+    """
+    import gzip
+    return gzip.open(file_handle, 'rt')
 
 def get_input_files_for_table(config: Dict, table_spec: Dict, modified_since: str = None) -> Generator:
     """
