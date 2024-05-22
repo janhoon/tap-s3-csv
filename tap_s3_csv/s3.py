@@ -234,9 +234,13 @@ def un_gzip_file(file_handle: Iterator) -> Iterator:
     :returns: unzipped file iterator
     """
     import gzip
+    import io
 
-    file_handle = gzip.GzipFile(fileobj=file_handle)
-    return file_handle.__iter__()
+    with gzip.GzipFile(fileobj=io.BytesIO(file_handle.read())) as unzipped_file:
+        raw_stream = io.BufferedReader(unzipped_file)
+        data = raw_stream.read()
+
+        return data
 
 
 def get_input_files_for_table(
