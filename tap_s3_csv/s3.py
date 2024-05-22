@@ -4,14 +4,14 @@ Modules containing all AWS S3 related features
 
 from __future__ import division
 
-import io
 import os
 import itertools
 import more_itertools
 import re
 import backoff
 import boto3
-import gzip
+
+from tap_s3_csv.utils import read_gzip_s3
 
 from botocore.exceptions import ClientError
 from singer_encodings.csv import (
@@ -158,15 +158,6 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
             to_return[key] = second[key]
 
     return to_return
-
-
-def read_gzip_s3(body):
-    """
-    Read a gzip file from S3
-    :param body: file body
-    :return: generator containing the lines of the file
-    """
-    return gzip.open(body, mode="rb")
 
 
 def sample_file(
