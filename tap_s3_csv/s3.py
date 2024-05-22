@@ -4,7 +4,7 @@ Modules containing all AWS S3 related features
 
 from __future__ import division
 
-import io
+import codecs
 import os
 import itertools
 import more_itertools
@@ -159,18 +159,12 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
     return to_return
 
-def un_gzip_file(file_handle: Iterator) -> Iterator:
-    """
-    Unzip the file
-    :param file_handle: file iterator
-    :returns: unzipped file iterator
-    """
 
-    with gzip.GzipFile(fileobj=io.BytesIO(file_handle.read())) as unzipped_file:
-        raw_stream = io.BufferedReader(unzipped_file)
-        data = raw_stream.read()
-
-    return data
+def read_gzip_s3(body):
+    with gzip.GzipFile(fileobj=body) as gzip_file:
+        # Use codecs.iterdecode to decode the lines
+        for line in codecs.iterdecode(gzip_file, "utf-8"):
+            yield line
 
 
 def sample_file(
@@ -186,18 +180,15 @@ def sample_file(
     """
     file_handle = get_file_handle(config, s3_path)
     if s3_path.endswith(".gz"):
-        file_handle = un_gzip_file(file_handle)
-    # _raw_stream seems like the wrong way to access this..
+        file_handle = read_gzip_s3(file_handle)
+        # _raw_stream seems like the wrong way to access this..
         iterator = get_row_iterator(
-            file_handle,  # pylint:disable=protected-access
-            table_spec
+            file_handle, table_spec  # pylint:disable=protected-access
         )  # pylint:disable=protected-access
     else:
         iterator = get_row_iterator(
-            file_handle.__raw_stream,  # pylint:disable=protected-access
-            table_spec
+            file_handle.__raw_stream, table_spec  # pylint:disable=protected-access
         )  # pylint:disable=protected-access
-
 
     current_row = 0
 
@@ -247,7 +238,6 @@ def sample_files(
         yield from itertools.islice(
             sample_file(config, table_spec, s3_file["key"], sample_rate), max_records
         )
-
 
 
 def get_input_files_for_table(
