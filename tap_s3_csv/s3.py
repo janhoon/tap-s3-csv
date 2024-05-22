@@ -187,7 +187,7 @@ def sample_file(
             next(file_handle)
         # _raw_stream seems like the wrong way to access this..
         iterator = get_row_iterator(
-            file_handle, table_spec  # pylint:disable=protected-access
+            file_handle  # pylint:disable=protected-access
         )  # pylint:disable=protected-access
     else:
         iterator = get_row_iterator(
