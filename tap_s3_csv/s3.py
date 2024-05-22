@@ -183,6 +183,8 @@ def sample_file(
     file_handle = get_file_handle(config, s3_path)
     if s3_path.endswith(".gz"):
         file_handle = read_gzip_s3(file_handle)
+        for _ in range(1):
+            next(file_handle)
         # _raw_stream seems like the wrong way to access this..
         iterator = get_row_iterator(
             file_handle, table_spec  # pylint:disable=protected-access
