@@ -161,9 +161,13 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
 
 def read_gzip_s3(body):
-    body_stream = io.BytesIO(body.read())
-    with gzip.GzipFile(fileobj=body_stream) as gzip_file:
-        for line in io.TextIOWrapper(gzip_file):
+    """
+    Read a gzip file from S3
+    :param body: file body
+    :return: generator containing the lines of the file
+    """
+    with gzip.GzipFile(fileobj=body) as gzip_file:
+        for line in io.BytesIO(gzip_file):
             yield line
 
 
@@ -181,6 +185,8 @@ def sample_file(
     file_handle = get_file_handle(config, s3_path)
     if s3_path.endswith(".gz"):
         file_handle = read_gzip_s3(file_handle)
+        for _ in range(1):
+            next(file_handle)
         # _raw_stream seems like the wrong way to access this..
         iterator = get_row_iterator(
             file_handle, table_spec  # pylint:disable=protected-access
