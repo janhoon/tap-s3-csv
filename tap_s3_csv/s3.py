@@ -161,7 +161,7 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
 
 def read_gzip_s3(body):
-    body_stream = io.BytesIO(body)
+    body_stream = io.BytesIO(body.read())
     return gzip.GzipFile(fileobj=body_stream)
 
 
