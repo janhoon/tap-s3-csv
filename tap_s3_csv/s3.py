@@ -161,9 +161,7 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
 
 def read_gzip_s3(body):
-    with gzip.GzipFile(fileobj=body) as gzip_file:
-        # Use codecs.iterdecode to decode the lines
-        return gzip_file
+    return gzip.GzipFile(fileobj=body)
 
 
 def sample_file(
