@@ -4,7 +4,7 @@ Modules containing all AWS S3 related features
 
 from __future__ import division
 
-import codecs
+import io
 import os
 import itertools
 import more_itertools
@@ -161,7 +161,8 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
 
 def read_gzip_s3(body):
-    return gzip.GzipFile(fileobj=body)
+    body_stream = io.BytesIO(body)
+    return gzip.GzipFile(fileobj=body_stream)
 
 
 def sample_file(
@@ -279,14 +280,13 @@ def get_input_files_for_table(
     ):
         key = s3_object["Key"]
         last_modified = s3_object["LastModified"]
-        LOGGER.info('Checking key "%s" last modified %s', key, last_modified)
 
         if s3_object["Size"] == 0:
             LOGGER.info('Skipping matched file "%s" as it is empty', key)
             unmatched_files_count += 1
             continue
 
-        else:
+        if matcher.search(key):
             matched_files_count += 1
             if modified_since is None or modified_since < last_modified:
                 LOGGER.info(
@@ -295,6 +295,9 @@ def get_input_files_for_table(
                     last_modified,
                 )
                 yield {"key": key, "last_modified": last_modified}
+
+        else:
+            unmatched_files_count += 1
 
         if (unmatched_files_count + matched_files_count) % max_files_before_log == 0:
             # Are we skipping greater than 50% of the files?
