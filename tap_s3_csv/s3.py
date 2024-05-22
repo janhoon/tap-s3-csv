@@ -286,7 +286,7 @@ def get_input_files_for_table(
             unmatched_files_count += 1
             continue
 
-        if matcher.search(key):
+        else:
             matched_files_count += 1
             if modified_since is None or modified_since < last_modified:
                 LOGGER.info(
@@ -295,8 +295,6 @@ def get_input_files_for_table(
                     last_modified,
                 )
                 yield {"key": key, "last_modified": last_modified}
-        else:
-            unmatched_files_count += 1
 
         if (unmatched_files_count + matched_files_count) % max_files_before_log == 0:
             # Are we skipping greater than 50% of the files?
