@@ -159,27 +159,18 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
     return to_return
 
-class UnzippedFileIterator(io.BufferedReader):
-    def __init__(self, raw_stream):
-        super().__init__(raw_stream)
-        self.___raw_stream = raw_stream
-
-    @property
-    def __raw_stream(self):
-        return self.___raw_stream
-
 def un_gzip_file(file_handle: Iterator) -> Iterator:
-    LOGGER.info("Unzipping file")
     """
     Unzip the file
     :param file_handle: file iterator
     :returns: unzipped file iterator
     """
 
-    file_iter = gzip.GzipFile(fileobj=file_handle)
-    raw_stream = UnzippedFileIterator(file_iter)
+    with gzip.GzipFile(fileobj=io.BytesIO(file_handle.read())) as unzipped_file:
+        raw_stream = io.BufferedReader(unzipped_file)
+        data = raw_stream.read()
 
-    return raw_stream
+    return data
 
 
 def sample_file(
@@ -197,10 +188,16 @@ def sample_file(
     if s3_path.endswith(".gz"):
         file_handle = un_gzip_file(file_handle)
     # _raw_stream seems like the wrong way to access this..
-    iterator = get_row_iterator(
-        file_handle.__raw_stream,  # pylint:disable=protected-access
-        table_spec
-    )  # pylint:disable=protected-access
+        iterator = get_row_iterator(
+            file_handle,  # pylint:disable=protected-access
+            table_spec
+        )  # pylint:disable=protected-access
+    else:
+        iterator = get_row_iterator(
+            file_handle.__raw_stream,  # pylint:disable=protected-access
+            table_spec
+        )  # pylint:disable=protected-access
+
 
     current_row = 0
 
