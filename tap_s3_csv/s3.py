@@ -166,7 +166,7 @@ def read_gzip_s3(body):
     :param body: file body
     :return: generator containing the lines of the file
     """
-    return gzip.GzipFile(fileobj=body, mode="rt")
+    return gzip.open(body, mode="rt")
 
 
 def sample_file(
