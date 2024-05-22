@@ -184,7 +184,6 @@ def sample_file(
     if s3_path.endswith(".gz"):
         file_handle = read_gzip_s3(file_handle)
         LOGGER.info("Reading gzipped file %s", s3_path)
-        LOGGER.info("first line: %s", file_handle.readline())
         # _raw_stream seems like the wrong way to access this..
         iterator = get_row_iterator(
             file_handle # pylint:disable=protected-access
