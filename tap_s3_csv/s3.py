@@ -4,12 +4,14 @@ Modules containing all AWS S3 related features
 
 from __future__ import division
 
+import io
 import os
 import itertools
 import more_itertools
 import re
 import backoff
 import boto3
+import gzip
 
 from botocore.exceptions import ClientError
 from singer_encodings.csv import (
@@ -157,6 +159,23 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
     return to_return
 
+class UnzippedFileIterator(io.BufferedReader):
+    def __init__(self, raw_stream):
+        super().__init__(raw_stream)
+        self.__raw_stream = raw_stream
+
+def un_gzip_file(file_handle: Iterator) -> Iterator:
+    """
+    Unzip the file
+    :param file_handle: file iterator
+    :returns: unzipped file iterator
+    """
+
+    file_iter = gzip.GzipFile(fileobj=file_handle)
+    raw_stream = UnzippedFileIterator(file_iter)
+
+    return raw_stream
+
 
 def sample_file(
     config: Dict, table_spec: Dict, s3_path: str, sample_rate: int
@@ -174,7 +193,8 @@ def sample_file(
         file_handle = un_gzip_file(file_handle)
     # _raw_stream seems like the wrong way to access this..
     iterator = get_row_iterator(
-        file_handle._raw_stream, table_spec
+        file_handle.__raw_stream,  # pylint:disable=protected-access
+        table_spec
     )  # pylint:disable=protected-access
 
     current_row = 0
@@ -226,21 +246,6 @@ def sample_files(
             sample_file(config, table_spec, s3_file["key"], sample_rate), max_records
         )
 
-
-def un_gzip_file(file_handle: Iterator) -> Iterator:
-    """
-    Unzip the file
-    :param file_handle: file iterator
-    :returns: unzipped file iterator
-    """
-    import gzip
-    import io
-
-    with gzip.GzipFile(fileobj=io.BytesIO(file_handle.read())) as unzipped_file:
-        raw_stream = io.BufferedReader(unzipped_file)
-        data = raw_stream.read()
-
-        return data
 
 
 def get_input_files_for_table(
