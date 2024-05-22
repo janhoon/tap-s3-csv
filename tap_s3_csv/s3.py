@@ -162,9 +162,14 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 class UnzippedFileIterator(io.BufferedReader):
     def __init__(self, raw_stream):
         super().__init__(raw_stream)
-        self.__raw_stream = raw_stream
+        self.___raw_stream = raw_stream
+
+    @property
+    def __raw_stream(self):
+        return self.___raw_stream
 
 def un_gzip_file(file_handle: Iterator) -> Iterator:
+    LOGGER.info("Unzipping file")
     """
     Unzip the file
     :param file_handle: file iterator
