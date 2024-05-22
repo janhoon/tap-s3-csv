@@ -162,7 +162,9 @@ def merge_dicts(first: Dict, second: Dict) -> Dict:
 
 def read_gzip_s3(body):
     body_stream = io.BytesIO(body.read())
-    return gzip.GzipFile(fileobj=body_stream)
+    with gzip.GzipFile(fileobj=body_stream) as gzip_file:
+        for line in io.TextIOWrapper(gzip_file):
+            yield line
 
 
 def sample_file(
