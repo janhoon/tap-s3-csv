@@ -10,7 +10,7 @@ from singer import metadata, Transformer, utils, get_bookmark, write_bookmark, w
 from singer_encodings.csv import get_row_iterator # pylint:disable=no-name-in-module
 
 from tap_s3_csv import s3
-from tap_s3_csv.utils import read_gzip_s3
+from tap_s3_csv.utils import read_gzip_s3, read_zip_s3
 
 LOGGER = get_logger('tap_s3_csv')
 
@@ -76,9 +76,11 @@ def sync_table_file(config: Dict, s3_path: str, table_spec: Dict, stream: Dict) 
     # memory consumption but that's acceptable as well.
     csv.field_size_limit(sys.maxsize)
     if s3_path.endswith('.gz'):
-        iterator = get_row_iterator(read_gzip_s3(s3_file_handle._raw_stream), table_spec)
+        iterator = get_row_iterator(read_gzip_s3(s3_file_handle), table_spec)
+    elif s3_path.endswith('.zip'):
+        iterator = get_row_iterator(read_zip_s3(s3_file_handle), table_spec)
     else:
-        iterator = get_row_iterator(s3_file_handle._raw_stream, table_spec)  # pylint:disable=protected-access
+        iterator = get_row_iterator(s3_file_handle, table_spec)
 
     records_synced = 0
 
