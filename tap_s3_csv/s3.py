@@ -11,7 +11,7 @@ import re
 import backoff
 import boto3
 
-from tap_s3_csv.utils import read_gzip_s3
+from tap_s3_csv.utils import read_gzip_s3, read_zip_s3
 
 from botocore.exceptions import ClientError
 from singer_encodings.csv import (
@@ -176,12 +176,14 @@ def sample_file(
         file_handle = read_gzip_s3(file_handle)
         LOGGER.info("Reading gzipped file %s", s3_path)
         # _raw_stream seems like the wrong way to access this..
-        iterator = get_row_iterator(
-            file_handle # pylint:disable=protected-access
-        )  # pylint:disable=protected-access
+        iterator = get_row_iterator(file_handle, table_spec)
+    elif s3_path.endswith(".zip"):
+        file_handle = read_zip_s3(file_handle)
+        LOGGER.info("Reading zip file %s", s3_path)
+        iterator = get_row_iterator(file_handle, table_spec)
     else:
         iterator = get_row_iterator(
-            file_handle.__raw_stream, table_spec  # pylint:disable=protected-access
+            file_handle, table_spec  # pylint:disable=protected-access
         )  # pylint:disable=protected-access
 
     current_row = 0
