@@ -16,8 +16,6 @@ def read_zip_s3(body):
     :param body: file body
     :return: file-like object in binary mode
     """
-    import zipfile
-    import io
     
     # Create a BytesIO object from the S3 body
     zip_data = io.BytesIO(body.read())
@@ -25,5 +23,6 @@ def read_zip_s3(body):
     # Keep references to prevent garbage collection
     zip_ref = zipfile.ZipFile(zip_data)
     first_file = zip_ref.namelist()[0]
+
     # Return the raw bytes without text decoding
     return zip_ref.open(first_file)
